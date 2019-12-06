@@ -1,10 +1,8 @@
 ---
-title: API Reference
+title: CheaprEats Developer Documentation
 
 language_tabs: # must be one of https://git.io/vQNgJ
   - shell
-  - ruby
-  - python
   - javascript
 
 toc_footers:
@@ -12,228 +10,116 @@ toc_footers:
   - <a href='https://github.com/lord/slate'>Documentation Powered by Slate</a>
 
 includes:
-  - errors
+  - types
 
 search: true
 ---
 
 # Introduction
 
-Welcome to the Kittn API! You can use our API to access Kittn API endpoints, which can get information on various cats, kittens, and breeds in our database.
+Welcome to CheaprEats! In this document, you will find all necessary information to get your integration up running with CheaprEats API.
 
-We have language bindings in Shell, Ruby, Python, and JavaScript! You can view code examples in the dark area to the right, and you can switch the programming language of the examples with the tabs in the top right.
+```shell
+curl --version
+```
 
-This example API documentation page was created with [Slate](https://github.com/lord/slate). Feel free to edit it and use it as a base for your own API's documentation.
+```javascript
+npm install @cheapreats/sdk
+```
+
+We use GraphQL as our API protocol, therefore you can use any GraphQL client you wish, however we do officially have a JavaScript SDK.
 
 # Authentication
 
 > To authorize, use this code:
 
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-```
-
 ```shell
 # With shell, you can just pass the correct header with each request
-curl "api_endpoint_here"
-  -H "Authorization: meowmeowmeow"
+curl "https://graphql-v1.cheapreats.com/graphql"
+  -H "Authorization: your-token-here"
 ```
 
 ```javascript
-const kittn = require('kittn');
+const CE = require('@cheapreats/sdk');
 
-let api = kittn.authorize('meowmeowmeow');
+CE.setAuthenticationToken('your-token-here');
 ```
 
-> Make sure to replace `meowmeowmeow` with your API key.
+Most endpoints require authorization, there are 3 types of tokens:
 
-Kittn uses API keys to allow access to the API. You can register a new Kittn API key at our [developer portal](http://example.com/developers).
+* Master token - CheaprEats internal, you probably can't use this.
+* Vendor token - Authorizes the call with an employee account for a specific vendor.
+* Customer token - Authorizes the call with a customer account.
 
-Kittn expects for the API key to be included in all API requests to the server in a header that looks like the following:
+To authorize, pass the token and the token only in `Authorization` header.
 
-`Authorization: meowmeowmeow`
+# Groups
 
-<aside class="notice">
-You must replace <code>meowmeowmeow</code> with your personal API key.
-</aside>
-
-# Kittens
-
-## Get All Kittens
-
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-api.kittens.get
-```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-api.kittens.get()
-```
+## Query Groups
 
 ```shell
-curl "http://example.com/api/kittens"
-  -H "Authorization: meowmeowmeow"
+curl 'https://graphql-v1.cheapreats.com/graphql' \
+  -H 'Accept-Encoding: gzip, deflate, br' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -H 'Connection: keep-alive' \
+  -H 'DNT: 1' \
+  -H 'Origin: https://graphql-v1.cheapreats.com' \
+  -H 'Authorization: your-token' \
+  --data-binary '{"query":"query($select: SelectInput) {\n  groups(select: $select) {\n    _id\n    name\n    customers {\n      _id\n    }\n  }\n}"}' \
+  --compressed
 ```
 
 ```javascript
-const kittn = require('kittn');
-
-let api = kittn.authorize('meowmeowmeow');
-let kittens = api.kittens.get();
+CE.Graph.query(`
+  query($select: SelectInput) {
+    groups(select: $select) {
+      _id
+      name
+      customers {
+        _id
+      }
+    }
+  }
+`, {})
+  .then(data => {
+    console.log(data);
+  });
 ```
 
 > The above command returns JSON structured like this:
 
 ```json
-[
-  {
-    "id": 1,
-    "name": "Fluffums",
-    "breed": "calico",
-    "fluffiness": 6,
-    "cuteness": 7
-  },
-  {
-    "id": 2,
-    "name": "Max",
-    "breed": "unknown",
-    "fluffiness": 5,
-    "cuteness": 10
+{
+  "data": {
+    "groups": [
+      {
+        "_id": "507f191e810c19729de860ea",
+        "name": "My Group",
+        "customers": [
+          {
+            "_id": "507f1f77bcf86cd799439011"
+          }
+        ]
+      }
+    ]
   }
-]
+}
 ```
 
-This endpoint retrieves all kittens.
+This endpoint queries all customer groups. Groups are used to logically group customers together, and can be used to A/B testing, targeted notifications etc.
 
-### HTTP Request
+### Query
 
-`GET http://example.com/api/kittens`
+groups(select: SelectInput): [[Group](#group)]
 
 ### Query Parameters
 
-Parameter | Default | Description
---------- | ------- | -----------
-include_cats | false | If set to true, the result will also include cats.
-available | true | If set to false, the result will include kittens that have already been adopted.
+Parameter | Default | Required | Description
+--------- | ------- | ---------| ------------
+select    | null    |   false  | Standard select filter.
 
-<aside class="success">
-Remember — a happy kitten is an authenticated kitten!
-</aside>
+### Authorization
 
-## Get a Specific Kitten
-
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-api.kittens.get(2)
-```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-api.kittens.get(2)
-```
-
-```shell
-curl "http://example.com/api/kittens/2"
-  -H "Authorization: meowmeowmeow"
-```
-
-```javascript
-const kittn = require('kittn');
-
-let api = kittn.authorize('meowmeowmeow');
-let max = api.kittens.get(2);
-```
-
-> The above command returns JSON structured like this:
-
-```json
-{
-  "id": 2,
-  "name": "Max",
-  "breed": "unknown",
-  "fluffiness": 5,
-  "cuteness": 10
-}
-```
-
-This endpoint retrieves a specific kitten.
-
-<aside class="warning">Inside HTML code blocks like this one, you can't use Markdown, so use <code>&lt;code&gt;</code> blocks to denote code.</aside>
-
-### HTTP Request
-
-`GET http://example.com/kittens/<ID>`
-
-### URL Parameters
-
-Parameter | Description
---------- | -----------
-ID | The ID of the kitten to retrieve
-
-## Delete a Specific Kitten
-
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-api.kittens.delete(2)
-```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-api.kittens.delete(2)
-```
-
-```shell
-curl "http://example.com/api/kittens/2"
-  -X DELETE
-  -H "Authorization: meowmeowmeow"
-```
-
-```javascript
-const kittn = require('kittn');
-
-let api = kittn.authorize('meowmeowmeow');
-let max = api.kittens.delete(2);
-```
-
-> The above command returns JSON structured like this:
-
-```json
-{
-  "id": 2,
-  "deleted" : ":("
-}
-```
-
-This endpoint deletes a specific kitten.
-
-### HTTP Request
-
-`DELETE http://example.com/kittens/<ID>`
-
-### URL Parameters
-
-Parameter | Description
---------- | -----------
-ID | The ID of the kitten to delete
+Requires master authorization, CheaprEats internal only.
 

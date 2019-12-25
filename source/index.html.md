@@ -53,6 +53,171 @@ Most endpoints require authorization, there are 3 types of tokens:
 
 To authorize, pass the token and the token only in `Authorization` header.
 
+# Select Filter
+
+Many queries and fields have an optional parameter `select` with `SelectInput` type. This parameter can be used to specify how do you want to filter the returned data.
+
+Inside `SelectInput`, there is a field called `where`, where filters can be used to filter results by matching field values. Similar to `WHERE` clause in SQL.
+
+## Basic Usage
+
+```shell
+curl 'https://graphql-v1.cheapreats.com/graphql' \
+  -H 'Accept-Encoding: gzip, deflate, br' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -H 'Connection: keep-alive' \
+  -H 'DNT: 1' \
+  -H 'Origin: https://graphql-v1.cheapreats.com' \
+  -H 'Authorization: your-token' \
+  --data-binary '{"query":"{\n  vendors(\n    select: {\n      where: {\n        filters: [\n          {field: \"_id\", match: \"5b379c2b826ce00a0be2ae68\"}\n        ]\n      }\n    }\n  ) {\n    _id\n    name\n  }\n}"}' \
+  --compressed
+```
+
+```javascript
+CE.Graph.query(`
+{
+  vendors(
+    select: {
+      where: {
+        filters: [
+          {field: "_id", match: "5b379c2b826ce00a0be2ae68"}
+        ]
+      }
+    }
+  ) {
+    _id
+    name
+  }
+}
+`);
+```
+
+You can use this filter to easily filter by a field.
+
+For example, if you want to filter a list of vendors by `_id`, then you can add a new entry in `filters` array, and specify the field `_id` to match `5b379c2b826ce00a0be2ae68`.
+
+
+## Field Operators
+
+```shell
+curl 'https://graphql-v1.cheapreats.com/graphql' \
+  -H 'Accept-Encoding: gzip, deflate, br' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -H 'Connection: keep-alive' \
+  -H 'DNT: 1' \
+  -H 'Origin: https://graphql-v1.cheapreats.com' \
+  -H 'Authorization: your-token' \
+  --data-binary '{"query":"{\n  vendors(\n    select: {\n      where: {\n        filters: [\n          {field: \"name\", match: \"(t|T)he\", operator: REGEX}\n        ]\n      }\n    }\n  ) {\n    _id\n    name\n  }\n}"}' \
+  --compressed
+```
+
+```javascript
+CE.Graph.query(`
+{
+  vendors(
+    select: {
+      where: {
+        filters: [
+          {field: "name", match: "(t|T)he", operator: REGEX}
+        ]
+      }
+    }
+  ) {
+    _id
+    name
+  }
+}
+`);
+```
+
+Above query will match the ID exactly, however there are more operators you can use, such as `REGEX`, by setting the operator as `REGEX` we can construct a query to find all vendors who's name have the word `the`.
+
+## Logical Operators
+
+```shell
+curl 'https://graphql-v1.cheapreats.com/graphql' \
+  -H 'Accept-Encoding: gzip, deflate, br' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -H 'Connection: keep-alive' \
+  -H 'DNT: 1' \
+  -H 'Origin: https://graphql-v1.cheapreats.com' \
+  -H 'Authorization: your-token' \
+  --data-binary '{"query":"{\n  vendors(\n    select: {\n      where: {\n        operator: OR,\n        filters: [\n          {field: \"name\", match: \"(t|T)he\", operator: REGEX},\n          {field: \"address\", match: \"Yonge\", operator: REGEX}\n        ]\n      }\n    }\n  ) {\n    _id\n    name\n    address\n  }\n}"}' \
+  --compressed
+```
+
+```javascript
+CE.Graph.query(`
+{
+  vendors(
+    select: {
+      where: {
+        operator: OR,
+        filters: [
+          {field: "name", match: "(t|T)he", operator: REGEX},
+          {field: "address", match: "Yonge", operator: REGEX}
+        ]
+      }
+    }
+  ) {
+    _id
+    name
+    address
+  }
+}
+`);
+```
+
+By default, when you have multiple filters, `AND` logical operator will be used to connect them, however you can set it to `OR` if you wish. The example query will return all stores that contains the word `the` or is on Yonge street.
+
+## Nested Logical Groups
+
+```shell
+curl 'https://graphql-v1.cheapreats.com/graphql' \
+  -H 'Accept-Encoding: gzip, deflate, br' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -H 'Connection: keep-alive' \
+  -H 'DNT: 1' \
+  -H 'Origin: https://graphql-v1.cheapreats.com' \
+  -H 'Authorization: your-token' \
+  --data-binary '{"query":"{\n  vendors(\n    select: {\n      where: {\n        operator: OR,\n        filters: [\n          {field: \"_id\", match: \"5d49c1028d692850fcc0a3de\", operator: EQUALS}\n        ],\n        filter_groups: {\n          operator: AND,\n          filters: [\n            {field: \"address\", match: \"Street\", operator: REGEX},\n            {field: \"created_at\", match: \"2019-10-25T00:00:00.928Z\", operator: GREATER_THAN}\n          ]\n        }\n      }\n    }\n  ) {\n    _id\n    name\n    address\n  }\n}"}' \
+  --compressed
+```
+
+```javascript
+CE.Graph.query(`
+{
+  vendors(
+    select: {
+      where: {
+        operator: OR,
+        filters: [
+          {field: "_id", match: "5d49c1028d692850fcc0a3de", operator: EQUALS}
+        ],
+        filter_groups: {
+          operator: AND,
+          filters: [
+            {field: "address", match: "Street", operator: REGEX},
+            {field: "created_at", match: "2019-10-25T00:00:00.928Z", operator: GREATER_THAN}
+          ]
+        }
+      }
+    }
+  ) {
+    _id
+    name
+    address
+  }
+}
+`);
+```
+
+You can even connect multiple groups of filters that uses different logical operators! Simply put a list of groups inside `filter_groups` array. The example query will return the store with ID `5d49c1028d692850fcc0a3de`, plus all stores that resides on a street and is created after October 25th.
+
 # Groups
 
 ## Query Groups

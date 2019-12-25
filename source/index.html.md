@@ -2,6 +2,7 @@
 title: CheaprEats Developer Documentation
 
 language_tabs: # must be one of https://git.io/vQNgJ
+  - graphql
   - shell
   - javascript
 
@@ -33,6 +34,10 @@ We use GraphQL as our API protocol, therefore you can use any GraphQL client you
 
 > To authorize, use this code:
 
+```graphql
+Authorization: your-token-here
+```
+
 ```shell
 # With shell, you can just pass the correct header with each request
 curl "https://graphql-v1.cheapreats.com/graphql"
@@ -60,6 +65,23 @@ Many queries and fields have an optional parameter `select` with `SelectInput` t
 Inside `SelectInput`, there is a field called `where`, where filters can be used to filter results by matching field values. Similar to `WHERE` clause in SQL.
 
 ## Basic Usage
+
+```graphql
+{
+  vendors(
+    select: {
+      where: {
+        filters: [
+          {field: "_id", match: "5b379c2b826ce00a0be2ae68"}
+        ]
+      }
+    }
+  ) {
+    _id
+    name
+  }
+}
+```
 
 ```shell
 curl 'https://graphql-v1.cheapreats.com/graphql' \
@@ -100,6 +122,23 @@ For example, if you want to filter a list of vendors by `_id`, then you can add 
 
 ## Field Operators
 
+```graphql
+{
+  vendors(
+    select: {
+      where: {
+        filters: [
+          {field: "name", match: "(t|T)he", operator: REGEX}
+        ]
+      }
+    }
+  ) {
+    _id
+    name
+  }
+}
+```
+
 ```shell
 curl 'https://graphql-v1.cheapreats.com/graphql' \
   -H 'Accept-Encoding: gzip, deflate, br' \
@@ -135,6 +174,26 @@ CE.Graph.query(`
 Above query will match the ID exactly, however there are more operators you can use, such as `REGEX`, by setting the operator as `REGEX` we can construct a query to find all vendors who's name have the word `the`.
 
 ## Logical Operators
+
+```graphql
+{
+  vendors(
+    select: {
+      where: {
+        operator: OR,
+        filters: [
+          {field: "name", match: "(t|T)he", operator: REGEX},
+          {field: "address", match: "Yonge", operator: REGEX}
+        ]
+      }
+    }
+  ) {
+    _id
+    name
+    address
+  }
+}
+```
 
 ```shell
 curl 'https://graphql-v1.cheapreats.com/graphql' \
@@ -174,6 +233,32 @@ CE.Graph.query(`
 By default, when you have multiple filters, `AND` logical operator will be used to connect them, however you can set it to `OR` if you wish. The example query will return all stores that contains the word `the` or is on Yonge street.
 
 ## Nested Logical Groups
+
+```graphql
+{
+  vendors(
+    select: {
+      where: {
+        operator: OR,
+        filters: [
+          {field: "_id", match: "5d49c1028d692850fcc0a3de", operator: EQUALS}
+        ],
+        filter_groups: {
+          operator: AND,
+          filters: [
+            {field: "address", match: "Street", operator: REGEX},
+            {field: "created_at", match: "2019-10-25T00:00:00.928Z", operator: GREATER_THAN}
+          ]
+        }
+      }
+    }
+  ) {
+    _id
+    name
+    address
+  }
+}
+```
 
 ```shell
 curl 'https://graphql-v1.cheapreats.com/graphql' \
@@ -221,6 +306,18 @@ You can even connect multiple groups of filters that uses different logical oper
 # Groups
 
 ## Query Groups
+
+```graphql
+query($select: SelectInput) {
+  groups(select: $select) {
+    _id
+    name
+    customers {
+      _id
+    }
+  }
+}
+```
 
 ```shell
 curl 'https://graphql-v1.cheapreats.com/graphql' \

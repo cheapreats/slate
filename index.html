@@ -226,6 +226,23 @@
             <a href="#authentication" class="toc-h1 toc-link" data-title="Authentication">Authentication</a>
           </li>
           <li>
+            <a href="#select-filter" class="toc-h1 toc-link" data-title="Select Filter">Select Filter</a>
+              <ul class="toc-list-h2">
+                  <li>
+                    <a href="#basic-usage" class="toc-h2 toc-link" data-title="Basic Usage">Basic Usage</a>
+                  </li>
+                  <li>
+                    <a href="#field-operators" class="toc-h2 toc-link" data-title="Field Operators">Field Operators</a>
+                  </li>
+                  <li>
+                    <a href="#logical-operators" class="toc-h2 toc-link" data-title="Logical Operators">Logical Operators</a>
+                  </li>
+                  <li>
+                    <a href="#nested-logical-groups" class="toc-h2 toc-link" data-title="Nested Logical Groups">Nested Logical Groups</a>
+                  </li>
+              </ul>
+          </li>
+          <li>
             <a href="#groups" class="toc-h1 toc-link" data-title="Groups">Groups</a>
               <ul class="toc-list-h2">
                   <li>
@@ -276,6 +293,136 @@ curl <span class="s2">"https://graphql-v1.cheapreats.com/graphql"</span>
 </ul>
 
 <p>To authorize, pass the token and the token only in <code>Authorization</code> header.</p>
+<h1 id='select-filter'>Select Filter</h1>
+<p>Many queries and fields have an optional parameter <code>select</code> with <code>SelectInput</code> type. This parameter can be used to specify how do you want to filter the returned data.</p>
+
+<p>Inside <code>SelectInput</code>, there is a field called <code>where</code>, where filters can be used to filter results by matching field values. Similar to <code>WHERE</code> clause in SQL.</p>
+<h2 id='basic-usage'>Basic Usage</h2><pre class="highlight shell tab-shell"><code>curl <span class="s1">'https://graphql-v1.cheapreats.com/graphql'</span> <span class="se">\</span>
+  -H <span class="s1">'Accept-Encoding: gzip, deflate, br'</span> <span class="se">\</span>
+  -H <span class="s1">'Content-Type: application/json'</span> <span class="se">\</span>
+  -H <span class="s1">'Accept: application/json'</span> <span class="se">\</span>
+  -H <span class="s1">'Connection: keep-alive'</span> <span class="se">\</span>
+  -H <span class="s1">'DNT: 1'</span> <span class="se">\</span>
+  -H <span class="s1">'Origin: https://graphql-v1.cheapreats.com'</span> <span class="se">\</span>
+  -H <span class="s1">'Authorization: your-token'</span> <span class="se">\</span>
+  --data-binary <span class="s1">'{"query":"{\n  vendors(\n    select: {\n      where: {\n        filters: [\n          {field: \"_id\", match: \"5b379c2b826ce00a0be2ae68\"}\n        ]\n      }\n    }\n  ) {\n    _id\n    name\n  }\n}"}'</span> <span class="se">\</span>
+  --compressed
+</code></pre><pre class="highlight javascript tab-javascript"><code><span class="nx">CE</span><span class="p">.</span><span class="nx">Graph</span><span class="p">.</span><span class="nx">query</span><span class="p">(</span><span class="s2">`
+{
+  vendors(
+    select: {
+      where: {
+        filters: [
+          {field: "_id", match: "5b379c2b826ce00a0be2ae68"}
+        ]
+      }
+    }
+  ) {
+    _id
+    name
+  }
+}
+`</span><span class="p">);</span>
+</code></pre>
+<p>You can use this filter to easily filter by a field.</p>
+
+<p>For example, if you want to filter a list of vendors by <code>_id</code>, then you can add a new entry in <code>filters</code> array, and specify the field <code>_id</code> to match <code>5b379c2b826ce00a0be2ae68</code>.</p>
+<h2 id='field-operators'>Field Operators</h2><pre class="highlight shell tab-shell"><code>curl <span class="s1">'https://graphql-v1.cheapreats.com/graphql'</span> <span class="se">\</span>
+  -H <span class="s1">'Accept-Encoding: gzip, deflate, br'</span> <span class="se">\</span>
+  -H <span class="s1">'Content-Type: application/json'</span> <span class="se">\</span>
+  -H <span class="s1">'Accept: application/json'</span> <span class="se">\</span>
+  -H <span class="s1">'Connection: keep-alive'</span> <span class="se">\</span>
+  -H <span class="s1">'DNT: 1'</span> <span class="se">\</span>
+  -H <span class="s1">'Origin: https://graphql-v1.cheapreats.com'</span> <span class="se">\</span>
+  -H <span class="s1">'Authorization: your-token'</span> <span class="se">\</span>
+  --data-binary <span class="s1">'{"query":"{\n  vendors(\n    select: {\n      where: {\n        filters: [\n          {field: \"name\", match: \"(t|T)he\", operator: REGEX}\n        ]\n      }\n    }\n  ) {\n    _id\n    name\n  }\n}"}'</span> <span class="se">\</span>
+  --compressed
+</code></pre><pre class="highlight javascript tab-javascript"><code><span class="nx">CE</span><span class="p">.</span><span class="nx">Graph</span><span class="p">.</span><span class="nx">query</span><span class="p">(</span><span class="s2">`
+{
+  vendors(
+    select: {
+      where: {
+        filters: [
+          {field: "name", match: "(t|T)he", operator: REGEX}
+        ]
+      }
+    }
+  ) {
+    _id
+    name
+  }
+}
+`</span><span class="p">);</span>
+</code></pre>
+<p>Above query will match the ID exactly, however there are more operators you can use, such as <code>REGEX</code>, by setting the operator as <code>REGEX</code> we can construct a query to find all vendors who&#39;s name have the word <code>the</code>.</p>
+<h2 id='logical-operators'>Logical Operators</h2><pre class="highlight shell tab-shell"><code>curl <span class="s1">'https://graphql-v1.cheapreats.com/graphql'</span> <span class="se">\</span>
+  -H <span class="s1">'Accept-Encoding: gzip, deflate, br'</span> <span class="se">\</span>
+  -H <span class="s1">'Content-Type: application/json'</span> <span class="se">\</span>
+  -H <span class="s1">'Accept: application/json'</span> <span class="se">\</span>
+  -H <span class="s1">'Connection: keep-alive'</span> <span class="se">\</span>
+  -H <span class="s1">'DNT: 1'</span> <span class="se">\</span>
+  -H <span class="s1">'Origin: https://graphql-v1.cheapreats.com'</span> <span class="se">\</span>
+  -H <span class="s1">'Authorization: your-token'</span> <span class="se">\</span>
+  --data-binary <span class="s1">'{"query":"{\n  vendors(\n    select: {\n      where: {\n        operator: OR,\n        filters: [\n          {field: \"name\", match: \"(t|T)he\", operator: REGEX},\n          {field: \"address\", match: \"Yonge\", operator: REGEX}\n        ]\n      }\n    }\n  ) {\n    _id\n    name\n    address\n  }\n}"}'</span> <span class="se">\</span>
+  --compressed
+</code></pre><pre class="highlight javascript tab-javascript"><code><span class="nx">CE</span><span class="p">.</span><span class="nx">Graph</span><span class="p">.</span><span class="nx">query</span><span class="p">(</span><span class="s2">`
+{
+  vendors(
+    select: {
+      where: {
+        operator: OR,
+        filters: [
+          {field: "name", match: "(t|T)he", operator: REGEX},
+          {field: "address", match: "Yonge", operator: REGEX}
+        ]
+      }
+    }
+  ) {
+    _id
+    name
+    address
+  }
+}
+`</span><span class="p">);</span>
+</code></pre>
+<p>By default, when you have multiple filters, <code>AND</code> logical operator will be used to connect them, however you can set it to <code>OR</code> if you wish. The example query will return all stores that contains the word <code>the</code> or is on Yonge street.</p>
+<h2 id='nested-logical-groups'>Nested Logical Groups</h2><pre class="highlight shell tab-shell"><code>curl <span class="s1">'https://graphql-v1.cheapreats.com/graphql'</span> <span class="se">\</span>
+  -H <span class="s1">'Accept-Encoding: gzip, deflate, br'</span> <span class="se">\</span>
+  -H <span class="s1">'Content-Type: application/json'</span> <span class="se">\</span>
+  -H <span class="s1">'Accept: application/json'</span> <span class="se">\</span>
+  -H <span class="s1">'Connection: keep-alive'</span> <span class="se">\</span>
+  -H <span class="s1">'DNT: 1'</span> <span class="se">\</span>
+  -H <span class="s1">'Origin: https://graphql-v1.cheapreats.com'</span> <span class="se">\</span>
+  -H <span class="s1">'Authorization: your-token'</span> <span class="se">\</span>
+  --data-binary <span class="s1">'{"query":"{\n  vendors(\n    select: {\n      where: {\n        operator: OR,\n        filters: [\n          {field: \"_id\", match: \"5d49c1028d692850fcc0a3de\", operator: EQUALS}\n        ],\n        filter_groups: {\n          operator: AND,\n          filters: [\n            {field: \"address\", match: \"Street\", operator: REGEX},\n            {field: \"created_at\", match: \"2019-10-25T00:00:00.928Z\", operator: GREATER_THAN}\n          ]\n        }\n      }\n    }\n  ) {\n    _id\n    name\n    address\n  }\n}"}'</span> <span class="se">\</span>
+  --compressed
+</code></pre><pre class="highlight javascript tab-javascript"><code><span class="nx">CE</span><span class="p">.</span><span class="nx">Graph</span><span class="p">.</span><span class="nx">query</span><span class="p">(</span><span class="s2">`
+{
+  vendors(
+    select: {
+      where: {
+        operator: OR,
+        filters: [
+          {field: "_id", match: "5d49c1028d692850fcc0a3de", operator: EQUALS}
+        ],
+        filter_groups: {
+          operator: AND,
+          filters: [
+            {field: "address", match: "Street", operator: REGEX},
+            {field: "created_at", match: "2019-10-25T00:00:00.928Z", operator: GREATER_THAN}
+          ]
+        }
+      }
+    }
+  ) {
+    _id
+    name
+    address
+  }
+}
+`</span><span class="p">);</span>
+</code></pre>
+<p>You can even connect multiple groups of filters that uses different logical operators! Simply put a list of groups inside <code>filter_groups</code> array. The example query will return the store with ID <code>5d49c1028d692850fcc0a3de</code>, plus all stores that resides on a street and is created after October 25th.</p>
 <h1 id='groups'>Groups</h1><h2 id='query-groups'>Query Groups</h2><pre class="highlight shell tab-shell"><code>curl <span class="s1">'https://graphql-v1.cheapreats.com/graphql'</span> <span class="se">\</span>
   -H <span class="s1">'Accept-Encoding: gzip, deflate, br'</span> <span class="se">\</span>
   -H <span class="s1">'Content-Type: application/json'</span> <span class="se">\</span>

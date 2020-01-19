@@ -303,6 +303,53 @@ CE.Graph.query(`
 
 You can even connect multiple groups of filters that uses different logical operators! Simply put a list of groups inside `filter_groups` array. The example query will return the store with ID `5d49c1028d692850fcc0a3de`, plus all stores that resides on a street and is created after October 25th.
 
+## Pagination Operators
+
+```graphql
+{
+  orders(select:{
+    limit:10, skip:1
+  }) {
+    _id
+    updated_at
+  }
+}
+```
+
+```shell
+curl 'https://graphql-v1.cheapreats.com/graphql' \
+  -H 'Accept-Encoding: gzip, deflate, br' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -H 'Connection: keep-alive' \
+  -H 'DNT: 1' \
+  -H 'Origin: https://graphql-v1.cheapreats.com' \
+  -H 'Authorization: your-token' \
+  --data-binary '{"query":"{\n  orders(\n    select: {\n limit: 10, skip: 1 }\n      }\n    }\n  ) {\n    _id\n    updated_at\n  }\n}"}' \
+  --compressed
+```
+
+```javascript
+CE.Graph.query(`
+  {
+    orders(select:{
+      limit:10, skip:1
+    }) {
+      _id
+      updated_at
+    }
+  }
+`);
+```
+
+The select filter allows you to specify two operators, `limit` and `skip`.
+
+* `limit` allows you to limit the number of results returned. By default, the results returned will be 100. The valid values for `limit` are between [1-100].
+
+* `skip` allows you to skip the desired number of starting results. By default, 0 results are skipped. The valid values for `limit` is > 0.
+
+
+
 # Groups
 
 ## Query Groups
@@ -384,4 +431,3 @@ select    | null    |   false  | Standard select filter.
 ### Authorization
 
 Requires master authorization, CheaprEats internal only.
-

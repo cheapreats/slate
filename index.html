@@ -241,6 +241,9 @@
                   <li>
                     <a href="#nested-logical-groups" class="toc-h2 toc-link" data-title="Nested Logical Groups">Nested Logical Groups</a>
                   </li>
+                  <li>
+                    <a href="#pagination-operators" class="toc-h2 toc-link" data-title="Pagination Operators">Pagination Operators</a>
+                  </li>
               </ul>
           </li>
           <li>
@@ -493,6 +496,41 @@ curl <span class="s2">"https://graphql-v1.cheapreats.com/graphql"</span>
 `</span><span class="p">);</span>
 </code></pre>
 <p>You can even connect multiple groups of filters that uses different logical operators! Simply put a list of groups inside <code>filter_groups</code> array. The example query will return the store with ID <code>5d49c1028d692850fcc0a3de</code>, plus all stores that resides on a street and is created after October 25th.</p>
+<h2 id='pagination-operators'>Pagination Operators</h2><pre class="highlight plaintext"><code>{
+  orders(select:{
+    limit:10, skip:1
+  }) {
+    _id
+    updated_at
+  }
+}
+</code></pre><pre class="highlight shell tab-shell"><code>curl <span class="s1">'https://graphql-v1.cheapreats.com/graphql'</span> <span class="se">\</span>
+  -H <span class="s1">'Accept-Encoding: gzip, deflate, br'</span> <span class="se">\</span>
+  -H <span class="s1">'Content-Type: application/json'</span> <span class="se">\</span>
+  -H <span class="s1">'Accept: application/json'</span> <span class="se">\</span>
+  -H <span class="s1">'Connection: keep-alive'</span> <span class="se">\</span>
+  -H <span class="s1">'DNT: 1'</span> <span class="se">\</span>
+  -H <span class="s1">'Origin: https://graphql-v1.cheapreats.com'</span> <span class="se">\</span>
+  -H <span class="s1">'Authorization: your-token'</span> <span class="se">\</span>
+  --data-binary <span class="s1">'{"query":"{\n  orders(\n    select: {\n limit: 10, skip: 1 }\n      }\n    }\n  ) {\n    _id\n    updated_at\n  }\n}"}'</span> <span class="se">\</span>
+  --compressed
+</code></pre><pre class="highlight javascript tab-javascript"><code><span class="nx">CE</span><span class="p">.</span><span class="nx">Graph</span><span class="p">.</span><span class="nx">query</span><span class="p">(</span><span class="s2">`
+  {
+    orders(select:{
+      limit:10, skip:1
+    }) {
+      _id
+      updated_at
+    }
+  }
+`</span><span class="p">);</span>
+</code></pre>
+<p>The select filter allows you to specify two operators, <code>limit</code> and <code>skip</code>.</p>
+
+<ul>
+<li><p><code>limit</code> allows you to limit the number of results returned. By default, the results returned will be 100. The valid values for <code>limit</code> are between [1-100].</p></li>
+<li><p><code>skip</code> allows you to skip the desired number of starting results. By default, 0 results are skipped. The valid values for <code>limit</code> is &gt; 0.</p></li>
+</ul>
 <h1 id='groups'>Groups</h1><h2 id='query-groups'>Query Groups</h2><pre class="highlight plaintext"><code>query($select: SelectInput) {
   groups(select: $select) {
     _id
